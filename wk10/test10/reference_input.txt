@@ -1,1 +1,7 @@
-/web/cs2041/22T2/activities/reference/files.ln/reference_input.txt
+line A
+line B
+line C
+#7
+line D
+#2
+line E

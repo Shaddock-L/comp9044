@@ -1,1 +1,8 @@
-/web/cs2041/22T2/activities/sort_file_lines/files.ln/file.txt
+tiny
+short line
+medium line
+longgggggg line
+a equal line
+b equal line
+c equal line
+even longggggggggggggggggggggggggggggggggggggggggggerr

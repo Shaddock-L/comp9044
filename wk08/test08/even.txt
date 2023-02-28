@@ -1,1 +1,6 @@
-/web/cs2041/22T2/activities/middle_lines/files.ln/even.txt
+line 0
+line 1
+line 2
+line 3
+line 4
+line 5
