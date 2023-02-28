@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+import re
+import sys
+import itertools
+
+def read_next():
+    try:
+        next = input()
+        return next
+    except EOFError as e:
+        return ""
+
+prev = input()
+while 1:
+        try:
+            #cont = sys.stdin.readline()
+            content = prev
+            next = read_next()
+            prev = next
+            if next != "":
+                print(content)
+            else:
+                print(f'this is the last line : {content}')
+                break
+            
+            
+        except EOFError as e:
+            print('this is the last line')
+            print(f'last : {prev}')
+            break

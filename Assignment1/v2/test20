@@ -1,0 +1,25 @@
+#!/bin/dash
+
+./tigger-init
+#Initialized empty tigger repository in .tigger
+touch a b c d e f g h
+./tigger-add a b c d e f
+./tigger-commit -m "first commit"
+#Committed as commit 0
+echo hello >a
+echo hello >b
+echo hello >c
+./tigger-add a b
+echo world >a
+rm d
+./tigger-rm e
+./tigger-add g
+#./tigger-status
+#a - file changed, different changes staged for commit
+#b - file changed, changes staged for commit
+#c - file changed, changes not staged for commit
+#d - file deleted
+#e - deleted
+#f - same as repo
+#g - added to index
+#h - untracked

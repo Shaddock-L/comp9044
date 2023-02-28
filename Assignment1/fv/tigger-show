@@ -1,0 +1,64 @@
+#!/bin/dash
+
+if test ! -d ".tigger"
+then
+	echo "tigger-show: error: tigger repository directory .tigger not found"
+	exit 1
+fi
+
+spec_line=-1
+
+if test "$#" -eq 1
+then
+    # check whether the input includes a : or not
+    if echo "$1" | grep -E "[0-9]+[0-9]*:[a-zA-Z0-9]+" >/dev/null
+    then
+        spec_line=$(echo "$1" | cut -d':' -f1)
+        fname=$(echo "$1" | cut -d':' -f2)
+        #echo "$spec_line"
+        #echo "$fname"
+    elif echo "$1" | grep -E "^:" >/dev/null
+    then 
+        fname=$(echo "$1" | cut -d':' -f2)
+        #echo "$fname"
+    else
+        echo "usage: tigger-show <commit>:<filename>"
+        exit 1
+    fi
+else
+    echo "usage: tigger-show <commit>:<filename>"
+    exit 1
+fi
+
+# have a specific line to print
+if test "$spec_line" -ge 0
+then
+    max_commit_num=$(cat  ".tigger"/".log"| cut -d' ' -f1 | sort -nr | head -1)
+    # check if the commit number is valid
+    if test "$max_commit_num" -ge "$spec_line"
+    then
+        file_path=".tigger"/"cache"/"history_""$spec_line"/"$fname"
+        if test -e "$file_path"
+        then
+            cat "$file_path"
+        else
+            echo "tigger-show: error: '"$fname"' not found in commit "$spec_line""
+        fi
+    else
+        echo "tigger-show: error: unknown commit '"$spec_line"'"
+        exit 1
+    fi
+
+
+else  
+# print the whole file
+    file_path=".tigger"/"index"/"$fname"
+    if test -e "$file_path"
+        then
+            cat "$file_path"
+    else
+        echo "tigger-show: error: '"$fname"' not found in index"
+        exit 1
+    fi
+
+fi

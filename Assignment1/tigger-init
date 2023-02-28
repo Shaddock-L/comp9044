@@ -1,0 +1,17 @@
+#!/bin/dash
+if test "$#" != 0
+then
+	echo "usage: tigger-init"
+	exit 1
+fi
+
+if test -d ".tigger"
+then
+	echo "./tigger-init: error: .tigger already exists"
+	exit 1
+fi
+
+mkdir ".tigger"
+echo "Initialized empty tigger repository in .tigger"
+mkdir ./".tigger"/"index"
+

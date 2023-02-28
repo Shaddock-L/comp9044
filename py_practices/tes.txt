@@ -1,0 +1,7 @@
+hello
+world
+this is a test file
+for the reverse command in 
+py
+nothing is special.
+Really ez one.

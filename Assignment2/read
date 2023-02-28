@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+import re
+import sys
+
+#pre process the arguments
+temp = sys.argv[1:]
+f_opt = False # read commands from file 
+n_opt = False #stops input lines being printed by default.
+commands = []
+cmd = []
+cmd_raw = ""
+commands_filename = ""
+filenames = []
+for i in range(len(temp)):
+    if temp[i] == '-f':
+        f_opt = True
+        commands_filename = temp[i+1]
+        i += 1
+        continue
+    elif temp[i] == '-n':
+        n_opt = True
+        continue
+    else:
+        if commands_filename != temp[i]:
+            commands.append(temp[i])
+if f_opt:
+    print("fopt is on")
+    with open(commands_filename, 'r') as f:
+        for line in f:
+            cmd.append(line)
+    for ele in commands:
+            filenames.append(ele)
+else:
+    cmd_raw = commands[0]
+    cmd = cmd_raw.split(';')
+    commands.pop(0)
+    if len(commands) > 0:
+        for ele in commands:
+            filenames.append(ele)
+
+
+
+# if n_opt:
+#     print("nopt is on")
+# print(f'cmd is {cmd}')
+# print(f'cmd_raw is {cmd_raw}')
+# print(f'commands_filename is {commands_filename}')
+# print(f'filenames is {filenames}')
+# print(f'commands is {commands}')
+
+# useful variables : 
+# 1.cmd : a list of multiple commands 
+# 2. filenames: if len(f) > 0, read from spec files
+# 3. -n option only print spec lines
+
+
+
+

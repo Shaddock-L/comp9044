@@ -1,0 +1,40 @@
+#!/bin/dash
+
+rm -rf .tigger
+
+./tigger-init
+#Initialized empty tigger repository in .tigger
+echo hello >a
+./tigger-add a
+./tigger-commit -m commit-0
+#Committed as commit 0
+./tigger-rm a
+./tigger-status
+#a - deleted
+./tigger-commit -m commit-1
+#Committed as commit 1
+./tigger-status
+echo world >a
+./tigger-status
+#a - untracked
+./tigger-commit -m commit-2
+:<<!
+#nothing to commit
+./tigger-add a
+./tigger-commit -m commit-2
+#Committed as commit 2
+./tigger-rm a
+./tigger-commit -m commit-3
+#Committed as commit 3
+./tigger-show :a
+#tigger-show: error: 'a' not found in index
+./tigger-show 0:a
+#hello
+./tigger-show 1:a
+#tigger-show: error: 'a' not found in commit 1
+./tigger-show 2:a
+#world
+./tigger-show 3:a
+#tigger-show: error: 'a' not found in commit 3
+./tigger-show 4:a
+#tigger-show: error: unknown commit '4'

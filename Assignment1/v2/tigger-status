@@ -1,0 +1,186 @@
+#!/bin/dash
+
+if test ! -d ".tigger"
+then
+	echo "tigger-status: error: no .tigger directory containing tigger repository exists"
+	exit 1
+fi
+
+
+
+# status:
+# 1 file does not exist in current dir or index or repo
+
+# . in repo & not in idx & not in cur dir : deleted
+# . ////////in repo & not in idx & in cur dir: untracked (ignore difference)
+# . in repo & in idx & not in cur dir : file deleted
+# . in repo & in idx & not in cur dir, repo file != idx file : file deleted, different changes staged for commit
+
+# 2 diff between idx and repo
+# . in idx & in repo & in cur dir & 2 files are same : same as repo
+# . in idx & in repo & in cur dir & idx file diff repo file : added to index
+# . in idx & not in cur dir & not in repo : added to index, file deleted
+
+# 3 in cur dir, commit status
+# . not in idx & in cur dir: untracked (ignore difference)
+# assume cur_dir_file = C, idx_dir_file = I, repo_dir_file = R
+# . C != I & I != R : file changed, different changes staged for commit
+# . C != I & I = R  : file changed, changes not staged for commit
+# . C = I & I != R : file changed, changes staged for commit
+
+
+
+# write the status into .tigger/status/.statusLog
+# use sort | uniq  to avoid duplicate
+
+
+# only one statusLog file is needed, so remove the previous one if it exists
+logPath=".tigger/status/.statusLog"
+if test -e "$logPath"
+then
+	rm "$logPath"
+fi
+
+
+
+# delete status
+# in repo but not in idx/cur  delete status
+for file in ".tigger"/*
+do
+	if test "$file" = ".tigger/cache"
+	then
+		continue
+	elif test "$file" = ".tigger/index"
+	then
+		continue
+	elif test "$file" = ".tigger/status"
+	then
+		continue
+	else
+		fname=$(echo "$file" | cut -d'/' -f2)
+		# 1. in repo & not in idx & not in cur dir : deleted
+		# 2. in repo & not in idx & in cur dir: untracked
+		if test ! -e ".tigger/index"/"$fname" 
+		then
+			if test ! -e "$fname"
+			then
+				#echo "$file"
+				#echo "$fname"
+                #echo "$fname  here"
+                
+				echo "$fname - deleted" >> "$logPath"
+			
+				
+			fi
+		else
+		# 3. in repo & in idx & not in cur dir : file deleted
+			#3.1 if repo file == idx file : file deleted
+			#3.2 if repo file != idx file : file deleted, different changes staged for commit
+			if test ! -e "$fname"
+			then
+				if ! diff ".tigger"/"$fname" ".tigger/index"/"$fname" > /dev/null 
+				then
+					echo "$fname - file deleted, different changes staged for commit" >> "$logPath"
+				else
+					echo "$fname - file deleted" >> "$logPath"
+				fi 
+			fi
+		fi
+	fi
+done
+
+for file in ".tigger/index"/*
+do
+	fname=$(echo "$file" | cut -d'/' -f3)	
+	if test -e "$fname"
+	then
+		# . in idx & in repo & in cur dir & 2 files are same : same as repo
+		# . in idx & in repo & in cur dir & idx file diff repo file : added to index
+		if test -e ".tigger"/"$fname"
+		then
+			if ! diff ".tigger"/"$fname" ".tigger/index"/"$fname" > /dev/null
+			then
+                if ! diff "$fname" ".tigger/index"/"$fname" > /dev/null
+				then
+                    echo "$fname - file changed, different changes staged for commit" >> "$logPath"
+                fi
+			else
+				# same
+                if diff ".tigger"/"$fname" "$fname" > /dev/null
+                then
+				    echo "$fname - same as repo" >> "$logPath"
+                fi
+			fi
+		else
+            if ! diff "$fname" ".tigger/index"/"$fname" > /dev/null
+            then
+                echo "$fname - added to index, file changed" >> "$logPath"
+            else
+			    echo "$fname - added to index" >> "$logPath"
+            fi
+		fi
+	else
+		# . in idx & not in cur dir & not in repo : added to index, file deleted
+		if test ! -e ".tigger"/"$fname"
+		then
+			if test "$fname" != "*"
+			then
+				echo "$fname - added to index, file deleted" >> "$logPath"
+			fi
+		fi
+	fi
+done
+
+# in cur dir, commit status
+# . not in idx & in cur dir: untracked (ignore difference)
+# . C != I & I != R : file changed, different changes staged for commit
+# . C != I & I = R  : file changed, changes not staged for commit
+# . C = I & I != R : file changed, changes staged for commit
+for fname in *
+do
+	if test ! -e ".tigger/index"/"$fname"
+	then
+        if test "$fname" != "*"
+        then 
+            echo "$fname - untracked" >> "$logPath"
+        fi
+        
+	else
+		# valid in cur dir
+		# check validation in repo
+		if test -e ".tigger"/"$fname"
+		then
+			# check validation in index
+			if test -e ".tigger/index"/"$fname"
+			then
+				cur_path="$fname"
+                idx_path=".tigger/index"/"$fname"
+                repo_path=".tigger"/"$fname"
+				# . C != I & I != R : file changed, different changes staged for commit
+				if ! diff "$cur_path" "$idx_path" > /dev/null
+				then
+					
+					if ! diff "$idx_path" "$repo_path" > /dev/null
+					then
+						
+						echo "$fname - file changed, different changes staged for commit" >> "$logPath"
+					else
+						# C != I & I = R  : file changed, changes not staged for commit
+						
+						echo "$fname - file changed, changes not staged for commit" >> "$logPath"
+					fi
+				else
+					# . C = I & I != R : file changed, changes staged for commit
+					if ! diff "$idx_path" "$repo_path" > /dev/null
+					then
+						echo "$fname - file changed, changes staged for commit" >> "$logPath"
+					fi
+				fi
+			fi
+		fi
+	fi
+done
+if test -e "$logPath"
+then
+    cat "$logPath" | sed '/^tigger-.*/d' | sort | uniq
+fi

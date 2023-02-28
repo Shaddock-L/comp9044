@@ -1,0 +1,28 @@
+#!/bin/dash
+
+./tigger-init
+#Initialized empty tigger repository in .tigger
+echo 1 >a
+echo 2 >b
+echo 3 >c
+./tigger-add a b c
+./tigger-commit -m "first commit"
+#Committed as commit 0
+echo 4 >>a
+echo 5 >>b
+echo 6 >>c
+echo 7 >d
+echo 8 >e
+./tigger-add b c d e
+echo 9 >b
+echo 0 >d
+./tigger-rm --cached a c
+:<<!
+./tigger-rm --force --cached b
+./tigger-rm --force --cached e
+./tigger-rm --force d
+./tigger-status
+#a - untracked
+#b - untracked
+#c - untracked
+#e - untracked

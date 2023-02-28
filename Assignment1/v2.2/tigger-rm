@@ -1,0 +1,208 @@
+#!/bin/dash
+
+if test ! -d ".tigger"
+then
+	echo "tigger-rm: error: no .tigger directory containing tigger repository exists"
+	exit 1
+fi
+
+force_flag=0
+cached_flag=0
+start_idx=0
+
+if test "$#" -lt 1
+then 
+    echo "usage: xxxx"
+    exit 1
+fi
+
+# check mode 
+for opt in "$@"
+do
+    if test "$opt" = "--force"
+    then
+        force_flag=1
+        start_idx=$((start_idx + 1))
+    elif test "$opt" = "--cached"
+    then
+        cached_flag=1
+        start_idx=$((start_idx + 1))
+    else
+        break
+    fi
+done
+
+# start from filename
+start=0
+for file in "$@"
+do
+    if test "$start" -lt "$start_idx"
+    then
+        start=$((start + 1))
+    else
+        if test "$cached_flag" -eq 1
+        then
+            if test "$force_flag" -eq 1
+            then
+                # only remove the file in the index
+                # loss protection mode : off
+                # check the valid name
+                if test ! -e ".tigger/index"/"$file"
+                then
+                    echo "here"
+                    echo "tigger-rm: error: '"$file"' is not in the tigger repository"
+                    
+                    exit 1
+                else
+                    rm ".tigger/index"/"$file"
+                fi 
+            else
+                # only remove the file in the index
+                # loss protection mode : on
+                # error message : tigger-rm: error: 'f' in index is different to both the working file and the repository
+
+                # check the valid name
+                if test ! -e ".tigger/index"/"$file"
+                then
+                    echo "tigger-rm: error: '"$file"' is not in the tigger repository"
+                    exit 1
+                else
+                    # safe test
+                    cur_path="$file"
+                    idx_path=".tigger/index"/"$file"
+                    repo_path=".tigger"/"$file"
+
+                    # file is already removed in current dir
+                    if test ! -e "$cur_path"
+                    then
+                        rm "$idx_path"
+                        exit 1
+                    fi
+
+                    # now , the 3 paths are all valid
+                    # check the difference between files in index and current dir
+                    if ! diff "$idx_path" "$cur_path" >/dev/null
+                    then
+                        # check the difference between files in idx and repo
+                        if ! diff "$idx_path" "$repo_path" >/dev/null
+                        then
+                            # both is different, pretecion mode: on
+                            echo "tigger-rm: error: '"$file"' in index is different to both the working file and the repository"
+                        else
+                            rm "$idx_path"
+                        fi
+                    else
+                        rm "$idx_path"
+                    fi
+                fi
+            fi
+        else
+            if test "$force_flag" -eq 1
+            then
+                # remove the file in index and current dir
+                # loss protection mode : off
+                # rm the file in index
+                if test ! -e ".tigger/index"/"$file"
+                then
+                    echo "tigger-rm: error: '"$file"' is not in the tigger repository"
+                    exit 1
+                else
+                    rm ".tigger/index"/"$file"
+                fi
+                # rm the file in current dir
+                if test  -e "$file"
+                then
+                    rm "$file"
+                fi
+            else
+                # remove the file in index and current dir
+                # loss protection mode : on
+                # tigger-rm: error: 'xijaf' is not in the tigger repository
+                # tigger-rm: error: 'f' in the repository is different to the working file cur != repo
+                # tigger-rm: error: 'f' has staged changes in the index    idx != repo
+                # if file in current dir is removed, this step can run
+                # safe test
+                cur_path="$file"
+                idx_path=".tigger/index"/"$file"
+
+                cmt_count=$(wc -l ".tigger"/".log" | cut -d' ' -f1)
+                cmt_count=$((cmt_count-1))
+                repo_path=".tigger"/"cache"/"history_""$cmt_count"/"$file"
+            
+                #repo_path=".tigger"/"$file"
+
+                
+                
+                if ! test -e "$idx_path"
+                then
+                    echo "tigger-rm: error: '"$file"' is not in the tigger repository"
+                    exit 1
+                fi
+
+                if ! test -e "$repo_path"
+                then
+                    echo "tigger-rm: error: '"$file"' has staged changes in the index"
+                    exit 1
+                fi
+
+                # if the file is deleted in current dir, rm it directly
+                if test ! -e "$cur_path"
+                then
+                    rm "$idx_path"
+                    exit 1
+                fi
+
+                # now 3 paths are all valid
+                # cur != repo
+                
+                if ! diff "$idx_path" "$repo_path" >/dev/null
+                then
+                    if ! diff "$idx_path" "$cur_path" > /dev/null
+                    then
+                        echo "tigger-rm: error: '"$file"' in index is different to both the working file and the repository"
+                        exit 1
+                    else
+                        echo "tigger-rm: error: '"$file"' has staged changes in the index"
+                        exit 1
+                    fi
+                fi
+
+                if ! diff "$cur_path" "$repo_path" >/dev/null
+                then
+                    echo "tigger-rm: error: '$file' in the repository is different to the working file"
+                    exit 1
+                fi
+
+
+                
+
+                #if ! diff "$idx_path" "$repo_path" > /dev/null
+                #then
+                #    if ! diff "$cur_path" "$repo_path" >/dev/null
+                #    then
+                 #       echo "tigger-rm: error: '"$file"' in index is different to both the working file and the repository"
+                 #       exit 1
+                 #   else
+                 #       echo "tigger-rm: error: '"$file"' has staged changes in the index"
+                  #      exit 1
+                  #  fi
+               # fi
+
+
+                
+                
+
+                # idx != repo
+               # if ! diff "$idx_path" "$repo_path" >/dev/null
+                #then
+                #    echo "tigger-rm: error: '"$file"' has staged changes in the index"
+                #    exit 1
+                #fi
+
+                # rm the files
+                rm "$idx_path"
+                rm "$cur_path"
+            fi
+        fi
+    fi
+done

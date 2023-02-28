@@ -1,0 +1,21 @@
+#!/bin/dash
+rm -rf .tigger
+./tigger-init
+#Initialized empty tigger repository in .tigger
+echo hi >a
+./tigger-add a
+./tigger-commit -m message
+#Committed as commit 0
+echo hello >b
+echo hola >c
+./tigger-add b c
+./tigger-status
+#a - same as repo
+#b - added to index
+#c - added to index
+echo there >>b
+rm c
+./tigger-status
+#a - same as repo
+#b - added to index, file changed
+#c - added to index, file deleted

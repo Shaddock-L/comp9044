@@ -1,0 +1,14 @@
+#!/bin/dash
+
+if test ! -d ".tigger"
+then
+	echo "tigger-add: error: tigger repository directory .tigger not found"
+	exit 1
+fi
+
+# tigger-commit -m msg
+if test "$#" -eq 2 
+then
+	
+	
+	

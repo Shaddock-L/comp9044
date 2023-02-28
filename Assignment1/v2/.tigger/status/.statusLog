@@ -1,0 +1,14 @@
+a - same as repo
+b - added to index, file changed
+c - added to index, file deleted
+test19 - untracked
+test20 - untracked
+test22 - untracked
+test23 - untracked
+tigger-add - untracked
+tigger-commit - untracked
+tigger-init - untracked
+tigger-log - untracked
+tigger-rm - untracked
+tigger-show - untracked
+tigger-status - untracked

@@ -1,0 +1,546 @@
+#!/usr/bin/env python3
+from operator import truediv
+from pickle import TRUE
+import re
+import sys
+
+#pre process the arguments
+temp = sys.argv[1:]
+f_opt = False # read commands from file 
+n_opt = False #stops input lines being printed by default.
+commands = []
+cmd = []
+cmd_raw = ""
+commands_filename = ""
+filenames = []
+for i in range(len(temp)):
+    if temp[i] == '-f':
+        f_opt = True
+        commands_filename = temp[i+1]
+        i += 1
+        continue
+    elif temp[i] == '-n':
+        n_opt = True
+        continue
+    else:
+        if commands_filename != temp[i]:
+            commands.append(temp[i])
+if f_opt:
+    #print("fopt is on")
+    with open(commands_filename, 'r') as f:
+        for line in f:
+            cmd.append(line.strip())
+    for ele in commands:
+            filenames.append(ele)
+else:
+    cmd_raw = commands[0]
+    cmd_raw = re.sub(r'\n', ';', cmd_raw)
+    cmd = cmd_raw.split(';')
+    commands.pop(0)
+    if len(commands) > 0:
+        for ele in commands:
+            filenames.append(ele)
+
+
+
+# if n_opt:
+#     print("nopt is on")
+# print(f'cmd is {cmd}')
+# print(f'cmd_raw is {cmd_raw}')
+# print(f'commands_filename is {commands_filename}')
+# print(f'filenames is {filenames}')
+# print(f'commands is {commands}')
+
+# useful variables : 
+# 1.cmd : a list of multiple commands 
+# 2. filenames: if len(f) > 0, read from spec files
+# 3. -n option only print spec lines
+
+quit_cmd = [] # highest priority
+print_cmd = []
+del_cmd = []
+sub_cmd = []
+for ele in cmd:
+    if ele[-1] == 'q':
+        quit_cmd.append(ele)
+    elif ele[-1] == 'p':
+        print_cmd.append(ele)
+    elif ele[-1] == 'd':
+        del_cmd.append(ele)
+    else:
+        sub_cmd.append(ele)
+
+# print(quit_cmd)
+# print(print_cmd) 
+# print(del_cmd)
+# print(sub_cmd)
+
+
+# global var for print/delete/substitude
+keep_print = False
+keep_delete = False
+keep_sub = False
+last_line_flag = False
+
+def read_next():
+    try:
+        next = input()
+        return next
+    except EOFError as e:
+        return ""
+
+
+# bool type
+def quit(comm, cur_cnt, text):
+    
+    global last_line_flag
+    for c in comm:
+        temp = c.split(',')
+        if len(temp) > 1:
+            print(f'slippy: command line: invalid command', file=sys.stderr)
+            sys.exit(1)
+        if c == '$q':
+            if last_line_flag:
+                return True
+        elif c == 'q':
+            return True
+        elif '/' in c:
+            # regex
+            pat = re.sub(r'q$','', c)
+            pat = re.sub(r'\/', '', pat)
+            if re.search(rf'{pat}', text):
+                return True          
+        else:
+                # number
+            num = int(c[:-1])
+            if num == cur_cnt:
+                return True
+    return False
+
+
+print_stat = 0
+
+def print_fun(comm, cur_cnt, text):
+    global keep_print
+    global print_stat
+    global last_line_flag
+    com = comm[:-1].split(',')
+    if len(com) == 1:
+        # 1 address
+        if '/' in comm:
+            # regex
+            pat = re.sub(r'p$','', comm)
+            pat = re.sub(r'\/', '', pat)
+            if re.search(rf'{pat}', text):
+                #print(text)   
+                return True      
+        else:
+            # number or 'p' or $
+            if comm == '$p':
+                if last_line_flag:
+                    #print(text)
+                    return True
+                    
+            elif comm == 'p': #command is 'p'
+                #print(text)
+                return True
+            else:
+                num = int(comm[:-1])
+                if num == cur_cnt:
+                    #print(text)
+                    return True
+    else:
+        # address is a range
+        # address 2(digit case) is before address 1(digit/regex)
+        if com[1].isdigit() and int(com[1]) < cur_cnt:
+            if com[0].isdigit() and int(com[0]) > int(com[1]):
+                if cur_cnt == int(com[0]):
+                    #print(text)
+                    return True
+            elif not com[0].isdigit():
+                pat = re.sub(r'\/', '', com[0])
+                if re.search(rf'{pat}', text):
+                    #print(text)
+                    return True
+        elif com[0] == '$':
+            if last_line_flag:
+                #print(text)
+                return True
+        elif keep_print:
+            
+            if com[1].isdigit():
+                # take nth line as address
+                num = int(com[1])
+                if cur_cnt == num:
+                    keep_print = False
+            elif com[1] == '$':
+                pass
+            else:
+                # take a regex as address
+                pat = re.sub(r'\/', '', com[1])
+                if re.search(rf'{pat}', text):
+                    keep_print = False
+            
+                #print(text)
+            return True
+
+        else:
+            # not match yet
+            if com[0].isdigit():
+                num = int(com[0])
+                if cur_cnt == num:
+                    keep_print = True
+                    if text:
+                        #print(text)
+                        return True
+            else:
+                pat = re.sub(r'\/', '', com[0])
+                if re.search(rf'{pat}', text):
+                    keep_print = True
+                    if text:
+                        #print(text)
+                        return True
+    return False
+                
+
+
+    # if '/' in comm:
+    #         # regex
+    #     pat = re.sub(r'p$','', comm)
+    #     pat = re.sub(r'\/', '', pat)
+    #     if re.search(rf'{pat}', text):
+    #         print(text)         
+    # else:
+    #         # number
+    #     if comm == 'p':
+    #         print(text)
+    #     else:
+    #         num = int(comm[:-1])
+    #         if num == cur_cnt:
+    #             print(text)
+
+def delete(comm, cur_cnt, text):
+    if comm == 'd':
+        return True
+    global last_line_flag
+
+    global keep_delete
+    com = comm[:-1].split(',')
+    if len(com) == 1:
+        # 1 address
+        if comm == '$d':
+            if last_line_flag:
+                return True
+        elif '/' in comm:
+            # regex
+            pat = re.sub(r'd$','', comm)
+            pat = re.sub(r'\/', '', pat)
+            if re.search(rf'{pat}', text):
+                return True
+        else:
+            # number
+            num = int(comm[:-1])
+            if num == cur_cnt:
+                return True
+    else:
+        # address is a range
+        if keep_delete:
+            if com[1].isdigit():
+                #take nth line as address
+                num = int(com[1])
+                if cur_cnt == num:
+                    keep_delete = False
+                    return True
+            else:
+                # take a regex as address
+                pat = re.sub(r'\/', '', com[1])
+                if re.search(rf'{pat}', text):
+                    keep_delete = False
+                    return True
+            return True
+        else:
+            # not match yet
+            if com[0].isdigit():
+                num = int(com[0])
+                if cur_cnt == num:
+                    keep_delete = True
+                    return True
+            else:
+                # take regex as address
+                pat = re.sub(r'\/', '', com[0])
+                if re.search(rf'{pat}', text):
+                    keep_delete = True
+                    return True
+    return False
+
+    # if '/' in comm:
+    #         # regex
+    #     pat = re.sub(r'd$','', comm)
+    #     pat = re.sub(r'\/', '', pat)
+    #     if re.search(rf'{pat}', text):
+    #         return True         
+    # else:
+    #     # number
+        
+    #     num = int(comm[:-1])
+    #     if num == cur_cnt:
+    #         return True
+    # return False
+
+def subs(comm, cur_cnt, text):
+    global keep_sub
+    temp = text
+    c = comm.split('s')
+    address = c[0]
+    deli_char = c[1][0]
+    pats = c[1].split(deli_char)
+    com = address.split(',')
+    
+    if len(com) == 1:
+        # 1 address
+        # no address
+        if com[0] == "":
+            if pats[-1] != 'g':
+                temp = re.sub(pats[1], pats[2], temp, count=1)
+            else:
+                temp = re.sub(pats[1], pats[2], temp)
+        elif com[0].isdigit():
+            # address is nth line
+            num = int(com[0])
+            if num == cur_cnt:
+                if pats[-1] != 'g':
+                    temp = re.sub(pats[1], pats[2], temp, count=1)
+                else:
+                    temp = re.sub(pats[1], pats[2], temp)
+        else:
+            # address is regex
+            pat = re.sub(r'\/', '', com[0])
+            if re.search(rf'{pat}', text):
+                if pats[-1] != 'g':
+                    temp = re.sub(pats[1], pats[2], temp, count=1)
+                else:
+                    temp = re.sub(pats[1], pats[2], temp)
+    else:
+        # address is a range
+        if keep_sub:
+            if com[1].isdigit():
+                # take nth line as address
+                num = int(com[1])
+                if cur_cnt == num:
+                    keep_sub = False
+                if pats[-1] != 'g':
+                    temp = re.sub(pats[1], pats[2], temp, count=1)
+                else:
+                    temp = re.sub(pats[1], pats[2], temp)
+            else:
+                # take a regex as address
+                pat = re.sub(r'\/', '', com[1])
+                if re.search(rf'{pat}', text):
+                    keep_sub = False
+                if pats[-1] != 'g':
+                    temp = re.sub(pats[1], pats[2], temp, count=1)
+                else:
+                    temp = re.sub(pats[1], pats[2], temp)
+        else:
+            # not match yet
+            if com[0].isdigit():
+                # take nth line as address
+                num = int(com[0])
+                if cur_cnt == num:
+                    keep_sub = True
+                    if pats[-1] != 'g':
+                        temp = re.sub(pats[1], pats[2], temp, count=1)
+                    else:
+                        temp = re.sub(pats[1], pats[2], temp)
+            else:
+                # take a regex as address
+                pat = re.sub(r'\/', '', com[0])
+                if re.search(rf'{pat}', text):
+                    keep_sub = True
+                    if pats[-1] != 'g':
+                        temp = re.sub(pats[1], pats[2], temp, count=1)
+                    else:
+                        temp = re.sub(pats[1], pats[2], temp)
+    return temp
+
+    # temp = text
+    # c = comm.split('s')
+    # address = c[0]
+    # deli_char = c[1][0]
+    # pats = c[1].split(deli_char)
+    # if address == "":
+    #     # regex sub only, no address
+    #     if pats[-1] != 'g':
+    #         temp = re.sub(pats[1], pats[2], temp, count=1)
+    #     else:
+    #         temp = re.sub(pats[1], pats[2], temp)
+    # else:
+    #     # address
+    #     if address.isdigit():
+    #         num = int(address)
+    #         if num == cur_cnt:
+    #             if pats[-1] != 'g':
+    #                 temp = re.sub(pats[1], pats[2], temp, count=1)
+    #             else:
+    #                 temp = re.sub(pats[1], pats[2], temp)
+    #     else:
+    #         #regex pat line
+    #         pat = re.sub(r'\/', '', address)
+    #         if re.search(rf'{pat}', text):
+    #             if pats[-1] != 'g':
+    #                 temp = re.sub(pats[1], pats[2], temp, count=1)
+    #             else:
+    #                 temp = re.sub(pats[1], pats[2], temp)
+    # return temp
+
+quit_flag = False
+count = 1
+if len(filenames) > 0:  # read from spec files
+    #print("pos1")
+
+    size = len(filenames)
+    total_length = 0
+    for i in range(size):
+        fn = filenames[i]
+    
+
+        # quit or not
+        if quit_flag:
+            break
+        #reset flags
+        keep_print = False
+        keep_delete = False
+        keep_sub = False
+        delete_flag = False
+        with open(fn, 'r') as f:
+            file = f.readlines()
+            total_length += len(file)
+            #print(f'total length {total_length}')
+            print_or_not = False
+            for line in file:
+                #print(f'count is {count}')
+                # check the last line
+                if total_length == count:
+                    if i == size - 1:
+                        last_line_flag = True
+
+                # rm \n in the end
+                content = line.strip()
+                delete_flag = False
+                # if quit(quit_cmd, count, content):
+                #     print(content)
+                #     quit_flag = True
+                #     break
+                for ele in cmd:
+                    # rm space and #.*
+                    ele = re.sub(' *', '', ele)
+                    if ';' not in ele:
+                        ele = re.sub('#.*', '', ele)
+                    else:
+                        ele = re.sub('#.*;', ';', ele)
+                        ele = re.sub('#.*', '', ele)
+
+                    if ele[-1] == 'q':
+                        if quit(quit_cmd, count, content):
+                            print(content)
+                            quit_flag = True
+                            break
+                    elif ele[-1] == 'p':
+                        print_switch = print_fun(ele, count, content)
+                        if print_switch:
+                            print_or_not = True
+                    elif ele[-1] == 'd':
+                        if delete(ele, count, content):
+                            delete_flag = True
+                            break
+                    else:
+                        content = subs(ele, count, content)
+                if not n_opt:
+                    if not delete_flag and not quit_flag and content!= "":
+                        print(content)
+                if print_or_not:
+                    print_or_not = False
+                    if content != "":
+                        print(content)
+
+                #print(f"hi, now is {content}")
+                # if quit(quit_cmd, count, content):
+                #     print(content)
+                #     quit_flag = True
+                #     break
+                count += 1
+    count -= 1
+    
+
+                
+else:
+    #print("pos2")
+    # read from input()
+    prev = input()
+    while 1:
+        
+        try:
+            #content = input()
+            print_or_not = False
+            content = prev
+            orig_cont = content
+            next = read_next()
+            prev = next
+            if next == "":
+                last_line_flag = True
+            delete_flag = False
+            
+            # if quit(quit_cmd, count, content):
+            #     print(content)
+            #     break
+            if quit_flag:
+                break
+            for ele in cmd:
+                ele = re.sub(' *', '', ele)
+                if ';' not in ele:
+                    ele = re.sub('#.*', '', ele)
+                else:
+                    ele = re.sub('#.*;', ';', ele)
+                    ele = re.sub('#.*', '', ele)
+
+                if ele[-1] == 'q':
+                    if quit(quit_cmd, count, content):
+                        quit_flag = True
+                        break
+                elif ele[-1] == 'p':
+                    #print_switch = print_fun(ele, count, content)
+                    
+                    print_switch = print_fun(ele, count, content)
+                    if print_switch:
+                        if not print_or_not:
+                            # never print before
+                            print_or_not = True
+                            print('hello~~', content)
+                        else:
+                            if content != orig_cont and content != "":
+                                print(content)
+                            
+                elif ele[-1] == 'd':
+                    if delete(ele, count, content):
+                            delete_flag = True
+                            break
+                else:
+                    # sed command
+                    content = subs(ele, count, content)
+            if not n_opt:
+                if not delete_flag:
+                    print(content)
+            # if print_or_not:
+            #     print_or_not = False
+            #     print(orig_cont)
+
+            # if quit(quit_cmd, count, content):
+            #     print(content)
+            #     break
+            count += 1
+            if last_line_flag:
+                break
+            
+            
+        except EOFError as e:
+            break

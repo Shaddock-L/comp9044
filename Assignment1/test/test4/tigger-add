@@ -1,0 +1,47 @@
+#!/bin/dash
+# tigger-add adds files into index, not repo
+# after running the tigger-commit command, the files in the index will be added into repo
+if test ! -d ".tigger"
+then
+	echo "tigger-add: error: tigger repository directory .tigger not found"
+	exit 1
+fi
+
+if [ $# -eq 0 ]
+then
+	echo "usage: ./tigger-add <filenames>"
+	exit 1;
+fi
+
+
+for file in "$@"
+do	
+	#check valid name
+	if echo "$file" | grep -E "^[^a-zA-Z0-9]" >/dev/null
+	then
+		echo "./tigger-add: error: invalid filename '$file'"
+		exit 1
+	
+	elif echo "$file" | grep -E "^[a-zA-Z0-9][^a-zA-Z0-9\.\-_]"	>/dev/null 
+	then
+		echo "./tigger-add: error: invalid filename '$file'"	
+		exit 1
+	fi
+
+	#add files
+	if test -e "$file"
+	then
+		cp "$file" ".tigger"/"index"
+	else
+		# file is deleted in pwd
+		#1. file exists in index, need to renew in the index
+		#2. file does not exist in index either, wrong file name
+		if test -e ".tigger"/"index"/"$file"
+		then
+			rm ".tigger"/"index"/"$file"
+		else
+			echo "tigger-add: error: can not open 'non_existent_file'"
+		fi
+	fi
+
+done

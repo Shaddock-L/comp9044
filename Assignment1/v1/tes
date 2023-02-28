@@ -1,0 +1,26 @@
+#!/bin/dash
+./tigger-init
+#Initialized empty tigger repository in .tigger
+touch a b
+./tigger-add a b
+./tigger-commit -m "first commit"
+#Committed as commit 0
+rm a
+./tigger-commit -m "second commit"
+#nothing to commit
+./tigger-add a
+./tigger-commit -m "second commit"
+#Committed as commit 1
+./tigger-rm --cached b
+./tigger-commit -m "second commit"
+#Committed as commit 2
+./tigger-rm b
+#tigger-rm: error: 'b' is not in the tigger repository
+./tigger-add b
+./tigger-rm b
+#tigger-rm: error: 'b' has staged changes in the index
+./tigger-commit -m "third commit"
+#Committed as commit 3
+./tigger-rm b
+./tigger-commit -m "fourth commit"
+#Committed as commit 4

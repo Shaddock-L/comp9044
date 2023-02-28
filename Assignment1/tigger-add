@@ -1,0 +1,46 @@
+#!/bin/dash
+
+if test ! -d ".tigger"
+then
+	echo "tigger-add: error: tigger repository directory .tigger not found"
+	exit 1
+fi
+
+if test "$#" -eq 0 
+then
+	echo "usage: ./tigger-add <filenames>"
+	exit 1;
+fi
+
+
+for file in "$@"
+do	
+	#check valid name
+	#start with a-zA-Z0-9
+	if echo "$file" | grep -E "^[^a-zA-Z0-9]" >/dev/null
+	then
+		echo "tigger-add: error: invalid filename '"$file"'"
+		exit 1
+	# valid chars:a-zA-Z0-9 '.' '-' '_'
+	elif echo "$file" | grep -E "[^a-zA-Z0-9\.\-_]"	>/dev/null 
+	then
+		echo "tigger-add: error: invalid filename '"$file"'"	
+		exit 1
+	fi
+
+	# add the files
+	if test -e "$file"
+	then
+		cp "$file" ./".tigger"/"index"
+	else
+	# 1, file exists in index. Now index and pwd have different status, so we need to renew it
+	# 2, file does not exist in both pwd and index, print the error message
+		if test -e ./".tigger"/"index"/"$file"
+		then
+			rm ./".tigger"/"index"/"$file"
+		else
+			echo "tigger-add: error: can not open '"$file"'"
+		fi
+	fi
+
+done

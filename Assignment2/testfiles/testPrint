@@ -1,0 +1,13 @@
+#!/bin/dash
+
+2041 autotest slippy test15_subset0_print slippy
+2041 autotest slippy test16_subset0_print
+2041 autotest slippy test17_subset0_print
+2041 autotest slippy test18_subset0_print
+2041 autotest slippy test19_subset0_print
+2041 autotest slippy test20_subset0_print
+2041 autotest slippy test21_subset0_print
+2041 autotest slippy test22_subset0_print
+2041 autotest slippy test23_subset0_print
+2041 autotest slippy test24_subset0_print
+2041 autotest slippy test25_subset0_print

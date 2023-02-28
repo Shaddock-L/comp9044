@@ -1,0 +1,48 @@
+#!/bin/dash
+
+./tigger-init
+#Initialized empty tigger repository in .tigger
+echo 1 >a
+echo 2 >b
+echo 3 >c
+./tigger-add a b c
+./tigger-commit -m "first commit"
+#Committed as commit 0
+echo 4 >>a
+echo 5 >>b
+echo 6 >>c
+echo 7 >d
+echo 8 >e
+./tigger-add b c d
+echo 9 >b
+./tigger-rm a
+#tigger-rm: error: 'a' in the repository is different to the working file
+./tigger-rm b
+#tigger-rm: error: 'b' in index is different to both the working file and the repository
+./tigger-rm c
+#tigger-rm: error: 'c' has staged changes in the index
+./tigger-rm d
+#tigger-rm: error: 'd' has staged changes in the index
+./tigger-rm e
+
+
+#tigger-rm: error: 'e' is not in the tigger repository
+./tigger-rm --cached a
+./tigger-rm --cached b
+
+
+#tigger-rm: error: 'b' in index is different to both the working file and the repository
+./tigger-rm --cached c
+./tigger-rm --cached d
+./tigger-rm --cached e
+#tigger-rm: error: 'e' is not in the tigger repository
+./tigger-rm --force a
+#tigger-rm: error: 'a' is not in the tigger repository
+:<<!
+./tigger-rm --force b
+./tigger-rm --force c
+#tigger-rm: error: 'c' is not in the tigger repository
+./tigger-rm --force d
+#tigger-rm: error: 'd' is not in the tigger repository
+./tigger-rm --force e
+#tigger-rm: error: 'e' is not in the tigger repository

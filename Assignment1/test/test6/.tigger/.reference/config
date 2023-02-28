@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	fileMode = false
+	bare = false
+	logallrefupdates = true
+	worktree = /tmp_amd/ravel/export/ravel/2/z5285799/Desktop/comp9044/Assignment1/test/test6
+[user]
+	email = tigger@example.com
+	name = tigger

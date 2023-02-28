@@ -1,0 +1,8 @@
+#!/bin/dash
+2041 autotest slippy test59_subset1_multiple_commands slippy
+2041 autotest slippy test60_subset1_multiple_commands slippy
+2041 autotest slippy test61_subset1_multiple_commands slippy
+2041 autotest slippy test62_subset1_multiple_commands slippy
+2041 autotest slippy test63_subset1_multiple_commands slippy
+2041 autotest slippy test64_subset1_multiple_commands slippy
+2041 autotest slippy test65_subset1_multiple_commands slippy
